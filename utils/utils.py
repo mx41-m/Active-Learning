@@ -80,24 +80,6 @@ def scratch_train_model(model, train_dataloader, max_epoch, lr, weight_decay, te
       print('Epoch', epoch, '---', 'LR', lr_scheduler.get_last_lr(), 'Val Acc: {:.3f}'.format(get_acc(model, test_dataloader) * 100), flush=True)
   return model
 
-def ddp_amp_train_model(model, train_dataloader, max_epoch, lr, weight_decay):
-  model.cuda()
-  model.train()
-  optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
-  lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, max_epoch * len(train_dataloader))
-  criterion = nn.CrossEntropyLoss()
-
-  for epoch in tqdm(range(max_epoch)):
-    train_dataloader.sampler.set_epoch(max_epoch)
-    for i, (data, label) in enumerate(train_dataloader):
-      data = data.cuda(non_blocking=True); label = label.cuda(non_blocking=True).long()
-      optimizer.zero_grad()
-      logits = model(data)
-      loss = criterion(logits, label)
-      loss.backward()
-      optimizer.step()
-  return model
-
 class CustomLogisticRegression(nn.Module):
   def __init__(self, input_dim, cls_num):
     super(CustomLogisticRegression, self).__init__()
